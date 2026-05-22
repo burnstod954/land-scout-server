@@ -1,1 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LandScout Pro — Charlotte Metro</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+:root{
+  --bg:#f5f4f0;--surf:#fff;--surf2:#f0efe9;--bdr:#e2dfd6;--bdr2:#ccc9be;
+  --grn:#166534;--grn-bg:#dcfce7;--grn-lt:#bbf7d0;
+  --txt:#18181b;--mut:#71717a;--mut2:#a1a1aa;
+  --warn:#92400e;--warn-bg:#fef3c7;--red:#991b1b;--red-bg:#fee2e2;
+  --mono:'IBM Plex Mono',monospace;--head:'Space Grotesk',sans-serif;
+}
+body{font-family:var(--head);font-size:13px;color:var(--txt);background:var(--bg);display:flex;flex-direction:column;height:100vh}
+.topbar{display:flex;align-items:center;gap:14px;padding:0 18px;height:50px;background:var(--txt);flex-shrink:0}
+.logo{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo em{color:#5dba7d;font-style:normal}
+.topbar-tag{font-size:10px;color:#666;font-family:var(--mono);margin-left:4px}
+.conn-wrap{margin-left:auto;display:flex;align-items:center;gap:8px}
+.conn-wrap span{font-size:11px;color:#aaa;font-family:var(--mono)}
+#dot{width:8px;height:8px;border-radius:50%;background:#555;transition:.3s;flex-shrink:0}
+#dot.ok{background:#5dba7d}
+#dot.err{background:#ef4444}
+.body-wrap{display:flex;flex:1;overflow:hidden}
+.sb{width:280px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto}
+.sb-top{padding:14px 14px 10px;border-bottom:1px solid var(--bdr)}
+.sb-sub{font-size:10px;color:var(--mut2);margin-top:2px;font-family:var(--mono)}
+.sect{padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.sect-lbl{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--mut2);margin-bottom:8px}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
+.pill{padding:3px 9px;border-radius:20px;border:1px solid var(--bdr2);font-size:11px;cursor:pointer;background:var(--surf2);color:var(--mut);user-select:none;transition:.1s}
+.pill.on{background:var(--grn);border-color:var(--grn);color:#fff;font-weight:500}
+.sr{margin-bottom:11px}.sr:last-child{margin-bottom:0}
+.sr-top{display:flex;justify-content:space-between;margin-bottom:4px}
+.sr-top label{font-size:11px;color:var(--txt)}
+.sr-val{font-family:var(--mono);font-size:11px;color:var(--grn);font-weight:600}
+input[type=range]{width:100%;height:3px;-webkit-appearance:none;background:var(--bdr);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--grn);border:2px solid var(--surf);cursor:pointer}
+.trow{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.trow span{font-size:11px;color:var(--txt)}
+.tog{position:relative;width:30px;height:16px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-tr{position:absolute;inset:0;background:var(--bdr2);border-radius:8px;cursor:pointer;transition:.15s}
+.tog input:checked+.tog-tr{background:var(--grn)}
+.tog-tr::after{content:'';position:absolute;width:10px;height:10px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.15s}
+.tog input:checked+.tog-tr::after{left:17px}
+.wr{margin-bottom:9px}
+.wr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.wr-top span{font-size:11px;color:var(--txt)}
+.wbadge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;font-family:var(--mono)}
+.wl{background:var(--surf2);color:var(--mut2);border:1px solid var(--bdr)}
+.wm{background:var(--warn-bg);color:var(--warn);border:1px solid #fcd34d}
+.wh{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-lt)}
+.run-area{padding:12px 14px;border-top:1px solid var(--bdr);margin-top:auto}
+.run-btn{width:100%;padding:11px;background:var(--grn);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--head);transition:.15s}
+.run-btn:hover{background:#15803d}
+.run-btn:disabled{opacity:.35;cursor:not-allowed}
+.run-note{font-size:10px;color:var(--mut2);margin-top:6px;line-height:1.5;font-family:var(--mono)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.stats{display:flex;border-bottom:1px solid var(--bdr);background:var(--surf);flex-shrink:0}
+.stat{flex:1;padding:9px 10px;border-right:1px solid var(--bdr);text-align:center}
+.stat:last-child{border-right:none}
+.stat-n{font-size:19px;font-weight:700;line-height:1}
+.stat-l{font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;font-family:var(--mono)}
+.prog-wrap{padding:6px 14px;background:var(--surf);border-bottom:1px solid var(--bdr);flex-shrink:0}
+.prog-track{height:4px;background:var(--bdr);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--grn);width:0%;transition:width .5s}
+.prog-lbl{font-size:10px;color:var(--mut2);margin-top:4px;font-family:var(--mono)}
+.tb{display:flex;align-items:center;gap:7px;padding:7px 14px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);flex-wrap:wrap}
+.tb select{border:1px solid var(--bdr2);background:var(--surf);color:var(--txt);padding:3px 7px;border-radius:5px;font-size:11px;font-family:var(--head);outline:none;cursor:pointer}
+.tb-ct{font-size:10px;color:var(--mut2);font-family:var(--mono);white-space:nowrap}
+.tb-right{margin-left:auto;display:flex;gap:5px}
+.sm-btn{padding:4px 10px;font-size:11px;border:1px solid var(--bdr2);background:var(--surf);color:var(--txt);border-radius:5px;cursor:pointer;font-family:var(--head)}
+.sm-btn.g{background:var(--grn-bg);border-color:var(--grn-lt);color:var(--grn)}
+.scroll{flex:1;overflow-y:auto;padding:14px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--mut2);text-align:center;padding:20px}
+.empty-icon{font-size:36px;opacity:.2}
+.empty-h{font-size:14px;font-weight:600;color:var(--mut)}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:9px;padding:13px 15px;margin-bottom:9px}
+.card:hover{border-color:var(--bdr2);box-shadow:0 1px 6px rgba(0,0,0,.05)}
+.card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px}
+.ch-info{flex:1;min-width:0}
+.c-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:var(--mono)}
+.b-county{background:var(--txt);color:#fff}
+.b-ind{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-lt)}
+.b-corp{background:var(--surf2);color:var(--mut);border:1px solid var(--bdr)}
+.b-trust{background:var(--warn-bg);color:var(--warn);border:1px solid #fcd34d}
+.c-owner{font-size:14px;font-weight:600;line-height:1.2}
+.c-addr{font-size:11px;color:var(--mut);margin-top:2px}
+.c-pin{font-size:10px;color:var(--mut2);margin-top:2px;font-family:var(--mono)}
+.score-box{flex-shrink:0;width:52px;text-align:center;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:5px 4px}
+.score-n{font-size:20px;font-weight:700;font-family:var(--mono);line-height:1}
+.score-g{font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-top:1px}
+.ga{color:var(--grn)}.gb{color:var(--warn)}.gc{color:var(--red)}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:9px}
+.met{background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:5px 4px;text-align:center}
+.mv{font-size:11px;font-weight:600;font-family:var(--mono)}
+.ml{font-size:8px;color:var(--mut2);margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px}
+.tag{font-size:9px;padding:2px 6px;border-radius:3px;font-family:var(--mono)}
+.t-ok{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-lt)}
+.t-w{background:var(--warn-bg);color:var(--warn);border:1px solid #fcd34d}
+.t-n{background:var(--red-bg);color:var(--red);border:1px solid #fca5a5}
+.t-g{background:var(--surf2);color:var(--mut);border:1px solid var(--bdr)}
+.card-mail{font-family:var(--mono);font-size:10px;color:var(--mut);background:var(--surf2);padding:5px 8px;border-radius:5px;margin-bottom:9px;border:1px solid var(--bdr)}
+.card-acts{display:flex;gap:5px;flex-wrap:wrap}
+.ca{padding:4px 10px;font-size:10px;border:1px solid var(--bdr2);background:var(--surf);color:var(--txt);border-radius:5px;cursor:pointer;font-family:var(--head)}
+.ca:hover{background:var(--surf2)}
+.ca.g{background:var(--grn-bg);border-color:var(--grn-lt);color:var(--grn)}
+.err-banner{background:var(--red-bg);border:1px solid #fca5a5;border-radius:7px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:var(--red);line-height:1.6}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">Land<em>Scout</em> <span class="topbar-tag">Pro</span></div>
+  <div style="font-size:10px;color:#666;font-family:var(--mono)">Charlotte Metro · Off-Market Land Finder · No subscription needed</div>
+  <div class="conn-wrap"><div id="dot"></div><span id="connLbl">Connecting...</span></div>
+</div>
 
+<div class="body-wrap">
+<aside class="sb">
+  <div class="sb-top">
+    <div style="font-size:13px;font-weight:700">Filter &amp; Score</div>
+    <div class="sb-sub">Pulls from NC parcel database · Free forever</div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-lbl">Target Counties</div>
+    <div class="pills">
+      <div class="pill on" data-k="mecklenburg" data-n="Mecklenburg">Mecklenburg</div>
+      <div class="pill on" data-k="iredell" data-n="Iredell">Iredell</div>
+      <div class="pill on" data-k="cabarrus" data-n="Cabarrus">Cabarrus</div>
+      <div class="pill on" data-k="union" data-n="Union">Union</div>
+      <div class="pill on" data-k="gaston" data-n="Gaston">Gaston</div>
+      <div class="pill" data-k="lincoln" data-n="Lincoln">Lincoln</div>
+      <div class="pill" data-k="rowan" data-n="Rowan">Rowan</div>
+      <div class="pill" data-k="stanly" data-n="Stanly">Stanly</div>
+      <div class="pill" data-k="cleveland" data-n="Cleveland">Cleveland</div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-lbl">Acreage Range</div>
+    <div class="sr">
+      <div class="sr-top"><label>Min acres</label><span class="sr-val" id="minLbl">25</span></div>
+      <input type="range" id="minA" min="5" max="300" value="25" step="5">
+    </div>
+    <div class="sr">
+      <div class="sr-top"><label>Max acres</label><span class="sr-val" id="maxLbl">500</span></div>
+      <input type="range" id="maxA" min="50" max="2000" value="500" step="25">
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-lbl">Owner Filters</div>
+    <div class="trow"><span>Individual / family owners</span><label class="tog"><input type="checkbox" id="tI" checked><div class="tog-tr"></div></label></div>
+    <div class="trow"><span>Corporate / LLC owners</span><label class="tog"><input type="checkbox" id="tC" checked><div class="tog-tr"></div></label></div>
+    <div class="trow"><span>Trust / estate owners</span><label class="tog"><input type="checkbox" id="tT" checked><div class="tog-tr"></div></label></div>
+    <div class="trow"><span>Exclude govt / public land</span><label class="tog"><input type="checkbox" id="tG" checked><div class="tog-tr"></div></label></div>
+    <div class="trow"><span>Exclude churches / nonprofits</span><label class="tog"><input type="checkbox" id="tCh" checked><div class="tog-tr"></div></label></div>
+    <div class="trow"><span>Vacant / unimproved only</span><label class="tog"><input type="checkbox" id="tV"><div class="tog-tr"></div></label></div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-lbl">Feasibility Scoring Weights</div>
+    <div class="wr">
+      <div class="wr-top"><span>Road frontage</span><span class="wbadge wh" id="wRL">High</span></div>
+      <input type="range" id="wR" min="1" max="3" value="3" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Water proximity</span><span class="wbadge wh" id="wWL">High</span></div>
+      <input type="range" id="wW" min="1" max="3" value="3" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Sewer availability</span><span class="wbadge wh" id="wSL">High</span></div>
+      <input type="range" id="wS" min="1" max="3" value="3" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Flood / drainage</span><span class="wbadge wm" id="wFL">Med</span></div>
+      <input type="range" id="wF" min="1" max="3" value="2" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Interstate access</span><span class="wbadge wh" id="wHL">High</span></div>
+      <input type="range" id="wH" min="1" max="3" value="3" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Growth corridor</span><span class="wbadge wm" id="wGL">Med</span></div>
+      <input type="range" id="wG" min="1" max="3" value="2" step="1">
+    </div>
+    <div class="wr">
+      <div class="wr-top"><span>Zoning compatibility</span><span class="wbadge wm" id="wZL">Med</span></div>
+      <input type="range" id="wZ" min="1" max="3" value="2" step="1">
+    </div>
+  </div>
+
+  <div class="run-area">
+    <button class="run-btn" id="runBtn">&#9655; Search Charlotte Metro</button>
+    <div class="run-note">Results filtered to Charlotte metro counties. Export CSV for outreach campaigns.</div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="stats">
+    <div class="stat"><div class="stat-n" id="sT">—</div><div class="stat-l">Tracts Found</div></div>
+    <div class="stat"><div class="stat-n" id="sI">—</div><div class="stat-l">Individuals</div></div>
+    <div class="stat"><div class="stat-n" id="sA">—</div><div class="stat-l">Grade A (80+)</div></div>
+    <div class="stat"><div class="stat-n" id="sAc">—</div><div class="stat-l">Avg Acres</div></div>
+    <div class="stat"><div class="stat-n" id="sCo">—</div><div class="stat-l">Counties</div></div>
+  </div>
+
+  <div class="prog-wrap" id="pgWrap" style="display:none">
+    <div class="prog-track"><div class="prog-fill" id="pgFill"></div></div>
+    <div class="prog-lbl" id="pgLbl">Starting...</div>
+  </div>
+
+  <div class="tb" id="tbWrap" style="display:none">
+    <span class="tb-ct" id="tbCt">0 results</span>
+    <select id="sSort">
+      <option value="score">Best score first</option>
+      <option value="ad">Largest acreage</option>
+      <option value="aa">Smallest acreage</option>
+      <option value="owner">Owner A-Z</option>
+      <option value="county">By county</option>
+    </select>
+    <select id="sCty"><option value="all">All counties</option></select>
+    <select id="sOwn">
+      <option value="all">All owner types</option>
+      <option value="Individual">Individuals only</option>
+      <option value="Corporate">Corporate / LLC</option>
+      <option value="Trust">Trust / estate</option>
+    </select>
+    <select id="sGrd">
+      <option value="all">All grades</option>
+      <option value="A">Grade A (80+)</option>
+      <option value="B">Grade B+ (55+)</option>
+    </select>
+    <div class="tb-right">
+      <button class="sm-btn g" id="exportBtn">Export CSV</button>
+      <button class="sm-btn" id="mailBtn">Copy mailing list</button>
+    </div>
+  </div>
+
+  <div class="scroll" id="scrollArea">
+    <div class="empty" id="emptyState">
+      <div class="empty-icon">&#9651;</div>
+      <div class="empty-h">Ready to search</div>
+      <div style="font-size:11px;line-height:1.7;max-width:300px;color:var(--mut2)">Select your target counties, set acreage and scoring weights, then click Search. Results show only parcels in the Charlotte metro area.</div>
+    </div>
+    <div id="cardArea"></div>
+  </div>
+</main>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+var GOVTKW  = ['COUNTY OF','CITY OF','TOWN OF','STATE OF','NCDOT','US ARMY','DUKE ENERGY','SCHOOL DIST','RAILROAD','PUBLIC SCHOOL'];
+var CHKW    = ['CHURCH','MINISTRY','TEMPLE','MOSQUE','CEMETERY','BAPTIST','METHODIST','PRESBYTERIAN','DIOCESE'];
+var CORPKW  = ['LLC','L.L.C','INC.','INC ','CORP','L.P.','LP,','LP ','LTD','HOLDINGS','VENTURES','REALTY','INVESTMENTS','PARTNERS','CAPITAL','REIT','FUND'];
+var TRUSTKW = ['TRUST','ESTATE OF','REVOCABLE'];
+
+// Charlotte-area interstates with actual coordinates
+var INTERSTATES = [
+  {name:'I-77',  lat:35.38, lng:-80.85},
+  {name:'I-85',  lat:35.22, lng:-80.70},
+  {name:'I-485', lat:35.16, lng:-80.86},
+  {name:'I-85N', lat:35.50, lng:-80.74},
+  {name:'I-77N', lat:35.57, lng:-80.84},
+  {name:'I-85S', lat:35.07, lng:-80.68}
+];
+
+// Charlotte metro growth corridors
+var GROWTH = [
+  {n:'N Mecklenburg/Huntersville', lat:35.42, lng:-80.85, r:15},
+  {n:'Mooresville/Lake Norman',    lat:35.58, lng:-80.81, r:16},
+  {n:'Concord/Cabarrus',           lat:35.41, lng:-80.58, r:18},
+  {n:'Waxhaw/Marvin',              lat:34.94, lng:-80.74, r:16},
+  {n:'Belmont/Gaston',             lat:35.25, lng:-81.03, r:14},
+  {n:'Harrisburg',                 lat:35.32, lng:-80.65, r:11},
+  {n:'Indian Land SC',             lat:34.97, lng:-80.88, r:14},
+  {n:'Denver/Lincoln',             lat:35.53, lng:-81.02, r:13},
+  {n:'Statesville/Iredell',        lat:35.78, lng:-80.88, r:12},
+  {n:'Monroe/Union',               lat:34.98, lng:-80.55, r:13}
+];
+
+// Urban score by county — affects water/sewer likelihood
+var URBAN = {
+  mecklenburg:0.95, iredell:0.55, cabarrus:0.60,
+  union:0.50, gaston:0.55, lincoln:0.35,
+  rowan:0.40, stanly:0.30, cleveland:0.30
+};
+
+var WL = {1:'Low', 2:'Med', 3:'High'};
+var WC = {1:'wl',  2:'wm',  3:'wh'};
+var allResults = [];
+
+// ── Weight badge updates ───────────────────────────────────────────────────
+function setWBadge(id, val) {
+  var el = document.getElementById(id);
+  el.textContent = WL[val];
+  el.className = 'wbadge ' + WC[val];
+}
+['wR','wW','wS','wF','wH','wG','wZ'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() {
+    setWBadge(id + 'L', this.value);
+  });
+});
+
+// ── Slider labels ──────────────────────────────────────────────────────────
+document.getElementById('minA').addEventListener('input', function() {
+  document.getElementById('minLbl').textContent = this.value;
+});
+document.getElementById('maxA').addEventListener('input', function() {
+  document.getElementById('maxLbl').textContent = this.value;
+});
+
+// ── Pill toggle ────────────────────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(function(p) {
+  p.addEventListener('click', function() { p.classList.toggle('on'); });
+});
+
+// ── Toolbar listeners ──────────────────────────────────────────────────────
+['sSort','sCty','sOwn','sGrd'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', render);
+});
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('mailBtn').addEventListener('click', copyMail);
+document.getElementById('runBtn').addEventListener('click', runSearch);
+
+// ── Helper functions ───────────────────────────────────────────────────────
+function classOwner(o) {
+  var u = (o || '').toUpperCase();
+  for (var i=0; i<TRUSTKW.length; i++) { if (u.indexOf(TRUSTKW[i]) >= 0) return 'Trust'; }
+  for (var i=0; i<CORPKW.length; i++)  { if (u.indexOf(CORPKW[i])  >= 0) return 'Corporate'; }
+  return 'Individual';
+}
+function isGovt(o) {
+  var u = (o||'').toUpperCase();
+  for (var i=0; i<GOVTKW.length; i++) { if (u.indexOf(GOVTKW[i]) >= 0) return true; }
+  return false;
+}
+function isChurch(o) {
+  var u = (o||'').toUpperCase();
+  for (var i=0; i<CHKW.length; i++) { if (u.indexOf(CHKW[i]) >= 0) return true; }
+  return false;
+}
+function kmDist(a, b, c, d) {
+  var R=6371;
+  var x = Math.pow(Math.sin((c-a)*Math.PI/360),2) + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.pow(Math.sin((d-b)*Math.PI/360),2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function getWeights() {
+  return {
+    r: parseInt(document.getElementById('wR').value),
+    w: parseInt(document.getElementById('wW').value),
+    s: parseInt(document.getElementById('wS').value),
+    f: parseInt(document.getElementById('wF').value),
+    h: parseInt(document.getElementById('wH').value),
+    g: parseInt(document.getElementById('wG').value),
+    z: parseInt(document.getElementById('wZ').value)
+  };
+}
+
+function calcScore(t, countyKey) {
+  var wt = getWeights();
+  var u  = URBAN[countyKey] || 0.4;
+  var total = (wt.r + wt.w + wt.s + wt.f + wt.h + wt.g + wt.z) * 10;
+  var pts = 0;
+  var tags = [];
+
+  // Road frontage
+  if (t.siteAddr && t.siteAddr.trim().length > 4) {
+    pts += wt.r * 10;
+    tags.push({l:'Road frontage likely', c:'ok'});
+  } else {
+    pts += wt.r * 4;
+    tags.push({l:'Road access: verify on site', c:'w'});
+  }
+
+  // Water
+  var ws = u >= 0.7 ? 0.9 : u >= 0.5 ? 0.7 : 0.45;
+  pts += wt.w * 10 * ws;
+  if (ws >= 0.7) tags.push({l:'Municipal water likely nearby', c:'ok'});
+  else if (ws >= 0.6) tags.push({l:'Water: verify proximity to lines', c:'w'});
+  else tags.push({l:'Well water likely needed', c:'w'});
+
+  // Sewer
+  var ss = u >= 0.7 ? 0.85 : u >= 0.5 ? 0.55 : 0.25;
+  pts += wt.s * 10 * ss;
+  if (ss >= 0.7) tags.push({l:'Sewer likely available', c:'ok'});
+  else if (ss >= 0.5) tags.push({l:'Sewer: check proximity', c:'w'});
+  else tags.push({l:'Septic system likely needed', c:'g'});
+
+  // Flood/drainage
+  var fs = (t.acres < 100 && u > 0.4) ? 0.8 : 0.55;
+  pts += wt.f * 10 * fs;
+  tags.push({l:'Pull FEMA flood map to verify', c:'g'});
+
+  // Interstate proximity
+  var minK = 9999;
+  for (var i=0; i<INTERSTATES.length; i++) {
+    if (t.lat && t.lng) {
+      var d = kmDist(t.lat, t.lng, INTERSTATES[i].lat, INTERSTATES[i].lng);
+      if (d < minK) minK = d;
+    }
+  }
+  t.hwyMi = t.lat ? Math.round(minK * 0.621) : null;
+  if (minK < 8)       { pts += wt.h * 10; tags.push({l:'< ' + t.hwyMi + ' mi to interstate', c:'ok'}); }
+  else if (minK < 20) { pts += wt.h * 6;  tags.push({l:'~ ' + t.hwyMi + ' mi to interstate', c:'w'}); }
+  else if (minK < 40) { pts += wt.h * 3;  tags.push({l:t.hwyMi + ' mi to interstate', c:'n'}); }
+  else                { pts += wt.h * 1;  tags.push({l:t.hwyMi + ' mi to interstate', c:'n'}); }
+
+  // Growth corridor
+  var gz = null;
+  if (t.lat && t.lng) {
+    for (var i=0; i<GROWTH.length; i++) {
+      if (kmDist(t.lat, t.lng, GROWTH[i].lat, GROWTH[i].lng) < GROWTH[i].r) { gz = GROWTH[i]; break; }
+    }
+  }
+  if (gz)        { pts += wt.g * 10; tags.push({l:'Growth zone: ' + gz.n, c:'ok'}); }
+  else if (u > 0.4) { pts += wt.g * 5;  tags.push({l:'Near metro, outside core growth corridor', c:'w'}); }
+  else              {                    tags.push({l:'Rural / fringe location', c:'g'}); }
+
+  // Zoning / land use
+  var ud = (t.usedesc || '').toUpperCase();
+  if (ud.indexOf('VACANT') >= 0 || ud.indexOf('AGRICULTUR') >= 0 || ud.indexOf('FARM') >= 0 || ud.indexOf('TIMBER') >= 0) {
+    pts += wt.z * 10; tags.push({l:'Dev-friendly land use', c:'ok'});
+  } else if (ud.indexOf('RESIDENTIAL') >= 0 || ud.indexOf('SINGLE FAM') >= 0) {
+    pts += wt.z * 7; tags.push({l:'Residential land use', c:'ok'});
+  } else if (ud.indexOf('COMMERCIAL') >= 0 || ud.indexOf('INDUSTRIAL') >= 0) {
+    pts += wt.z * 3; tags.push({l:'Commercial / industrial — verify rezoning', c:'w'});
+  } else {
+    pts += wt.z * 5; tags.push({l:'Verify zoning type', c:'g'});
+  }
+
+  return { score: Math.min(100, Math.round(pts / total * 100)), tags: tags };
+}
+
+function shouldSkip(t) {
+  if (document.getElementById('tG').checked && isGovt(t.owner))   return true;
+  if (document.getElementById('tCh').checked && isChurch(t.owner)) return true;
+  if (!document.getElementById('tI').checked && t.ownerType === 'Individual') return true;
+  if (!document.getElementById('tC').checked && t.ownerType === 'Corporate')  return true;
+  if (!document.getElementById('tT').checked && t.ownerType === 'Trust')      return true;
+  if (document.getElementById('tV').checked && t.struct) return true;
+  return false;
+}
+
+// ── Server connection ──────────────────────────────────────────────────────
+function ping() {
+  fetch('/health')
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      document.getElementById('dot').className = 'ok';
+      document.getElementById('connLbl').textContent = 'Server connected';
+    })
+    .catch(function() {
+      document.getElementById('dot').className = 'err';
+      document.getElementById('connLbl').textContent = 'Server not reachable';
+    });
+}
+ping();
+setInterval(ping, 15000);
+
+// ── Progress ───────────────────────────────────────────────────────────────
+function setP(pct, lbl) {
+  document.getElementById('pgFill').style.width = pct + '%';
+  document.getElementById('pgLbl').textContent = lbl;
+}
+
+// ── Main search ────────────────────────────────────────────────────────────
+function runSearch() {
+  var counties = [];
+  document.querySelectorAll('.pill.on').forEach(function(p) {
+    counties.push({ k: p.dataset.k, n: p.dataset.n });
+  });
+  if (!counties.length) { alert('Select at least one county.'); return; }
+
+  var minA = parseInt(document.getElementById('minA').value);
+  var maxA = parseInt(document.getElementById('maxA').value);
+
+  var btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching...';
+  document.getElementById('pgWrap').style.display = 'block';
+  document.getElementById('tbWrap').style.display = 'none';
+  document.getElementById('cardArea').innerHTML = '';
+  document.getElementById('emptyState').style.display = 'none';
+  allResults = [];
+  var errors = [];
+
+  function fetchNext(i) {
+    if (i >= counties.length) {
+      setP(100, 'Complete — ' + allResults.length + ' tracts found in Charlotte metro');
+      setTimeout(function() { document.getElementById('pgWrap').style.display = 'none'; }, 800);
+      updateStats();
+      fillCountyFilter();
+      render();
+      document.getElementById('tbWrap').style.display = 'flex';
+      if (errors.length) {
+        var d = document.createElement('div');
+        d.className = 'err-banner';
+        d.innerHTML = '<strong>Some counties had issues:</strong> ' + errors.join(' | ');
+        document.getElementById('cardArea').prepend(d);
+      }
+      if (!allResults.length) {
+        document.getElementById('emptyState').style.display = 'flex';
+        document.querySelector('.empty-h').textContent = 'No parcels found';
+        document.querySelector('.empty + div').textContent = 'Try lowering the minimum acreage or selecting more counties.';
+      }
+      btn.disabled = false;
+      btn.textContent = '\u25B7 Search Charlotte Metro';
+      return;
+    }
+
+    var c = counties[i];
+    setP(Math.round((i / counties.length) * 90), 'Querying ' + c.n + ' County (' + (i+1) + '/' + counties.length + ')...');
+
+    fetch('/api/parcels?county=' + c.k + '&min_acres=' + minA + '&max_acres=' + maxA)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error) throw new Error(data.error);
+        var parcels = data.parcels || [];
+        for (var j = 0; j < parcels.length; j++) {
+          var p = parcels[j];
+          p.ownerType  = classOwner(p.owner);
+          p.countyName = c.n;
+          p.countyKey  = c.k;
+          if (shouldSkip(p)) continue;
+          var scored = calcScore(p, c.k);
+          p.score = scored.score;
+          p.tags  = scored.tags;
+          allResults.push(p);
+        }
+        fetchNext(i + 1);
+      })
+      .catch(function(err) {
+        errors.push(c.n + ': ' + err.message);
+        fetchNext(i + 1);
+      });
+  }
+
+  fetchNext(0);
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('sT').textContent = allResults.length;
+  document.getElementById('sI').textContent = allResults.filter(function(t){ return t.ownerType === 'Individual'; }).length;
+  document.getElementById('sA').textContent = allResults.filter(function(t){ return t.score >= 80; }).length;
+  var avg = allResults.length ? allResults.reduce(function(s,t){ return s + t.acres; }, 0) / allResults.length : 0;
+  document.getElementById('sAc').textContent = Math.round(avg);
+  var counties = {};
+  allResults.forEach(function(t) { counties[t.countyName] = 1; });
+  document.getElementById('sCo').textContent = Object.keys(counties).length;
+}
+
+function fillCountyFilter() {
+  var sel = document.getElementById('sCty');
+  sel.innerHTML = '<option value="all">All counties</option>';
+  var seen = {};
+  allResults.forEach(function(t) {
+    if (!seen[t.countyName]) {
+      seen[t.countyName] = 1;
+      var o = document.createElement('option');
+      o.value = t.countyName;
+      o.textContent = t.countyName;
+      sel.appendChild(o);
+    }
+  });
+}
+
+function getFilt() {
+  var d = allResults.slice();
+  var fc = document.getElementById('sCty').value;
+  var fo = document.getElementById('sOwn').value;
+  var fg = document.getElementById('sGrd').value;
+  var fs = document.getElementById('sSort').value;
+  if (fc !== 'all') d = d.filter(function(t){ return t.countyName === fc; });
+  if (fo !== 'all') d = d.filter(function(t){ return t.ownerType === fo; });
+  if (fg === 'A')   d = d.filter(function(t){ return t.score >= 80; });
+  if (fg === 'B')   d = d.filter(function(t){ return t.score >= 55; });
+  if (fs === 'score')  d.sort(function(a,b){ return b.score - a.score; });
+  else if (fs === 'ad') d.sort(function(a,b){ return b.acres - a.acres; });
+  else if (fs === 'aa') d.sort(function(a,b){ return a.acres - b.acres; });
+  else if (fs === 'owner')  d.sort(function(a,b){ return (a.owner||'').localeCompare(b.owner||''); });
+  else if (fs === 'county') d.sort(function(a,b){ return a.countyName.localeCompare(b.countyName); });
+  return d;
+}
+
+function render() {
+  var d = getFilt();
+  document.getElementById('tbCt').textContent = d.length + ' result' + (d.length !== 1 ? 's' : '');
+  document.getElementById('cardArea').innerHTML = d.map(cardHTML).join('');
+}
+
+// ── Cards ──────────────────────────────────────────────────────────────────
+function gr(s) { return s >= 80 ? 'A' : s >= 55 ? 'B' : 'C'; }
+function gc(s) { return s >= 80 ? 'ga' : s >= 55 ? 'gb' : 'gc'; }
+
+function obdg(t) {
+  if (t.ownerType === 'Individual') return '<span class="badge b-ind">Individual</span>';
+  if (t.ownerType === 'Trust')      return '<span class="badge b-trust">Trust / estate</span>';
+  return '<span class="badge b-corp">Corporate</span>';
+}
+
+function esc(s) {
+  return (s || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' ');
+}
+
+function cardHTML(t) {
+  var tags = t.tags.map(function(tg) {
+    return '<span class="tag t-' + tg.c + '">' + tg.l + '</span>';
+  }).join('');
+
+  var pLink = (t.countyKey === 'mecklenburg' && t.pin)
+    ? 'https://polaris3g.mecklenburgcountync.gov/?pin=' + t.pin : '';
+  var lnk = pLink
+    ? '<a href="' + pLink + '" target="_blank"><button class="ca">View Mecklenburg record &#8599;</button></a>' : '';
+
+  return '<div class="card">' +
+    '<div class="card-head">' +
+      '<div class="ch-info">' +
+        '<div class="c-badges">' +
+          '<span class="badge b-county">' + t.countyName + '</span>' +
+          obdg(t) +
+          (t.usedesc ? '<span style="font-size:9px;color:var(--mut2);font-family:var(--mono)">' + t.usedesc + '</span>' : '') +
+        '</div>' +
+        '<div class="c-owner">' + (t.owner || 'Unknown owner') + '</div>' +
+        '<div class="c-addr">' + (t.siteAddr || 'No site address on file') + '</div>' +
+        '<div class="c-pin">PIN: ' + (t.pin || '—') + '</div>' +
+      '</div>' +
+      '<div class="score-box">' +
+        '<div class="score-n ' + gc(t.score) + '">' + t.score + '</div>' +
+        '<div class="score-g ' + gc(t.score) + '">Grade ' + gr(t.score) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="metrics">' +
+      '<div class="met"><div class="mv">' + t.acres.toFixed(1) + '</div><div class="ml">Acres</div></div>' +
+      '<div class="met"><div class="mv">' + (t.hwyMi !== null && t.hwyMi !== undefined ? t.hwyMi + 'mi' : '—') + '</div><div class="ml">Interstate</div></div>' +
+      '<div class="met"><div class="mv">' + (t.ownerType === 'Individual' ? 'Yes' : 'No') + '</div><div class="ml">Individual</div></div>' +
+      '<div class="met"><div class="mv">' + (t.struct ? 'Yes' : 'No') + '</div><div class="ml">Structure</div></div>' +
+      '<div class="met"><div class="mv">' + (t.assessed ? '$' + Math.round(t.assessed/1000) + 'k' : '—') + '</div><div class="ml">Assessed</div></div>' +
+    '</div>' +
+    '<div class="tags">' + tags + '</div>' +
+    '<div class="card-mail">&#9993; ' + (t.mailAddr || 'No mailing address on file') + '</div>' +
+    '<div class="card-acts">' +
+      '<button class="ca g" onclick="copyLetter(this,\'' + esc(t.owner) + '\',\'' + esc(t.pin) + '\',\'' + esc(t.siteAddr) + '\',\'' + esc(t.mailAddr) + '\',\'' + esc(t.countyName) + '\',\'' + t.acres.toFixed(1) + '\')">Copy outreach letter</button>' +
+      lnk +
+    '</div>' +
+  '</div>';
+}
+
+function copyLetter(btn, owner, pin, addr, mail, county, acres) {
+  var txt =
+    'Property: ' + addr + '\n' +
+    'Owner: ' + owner + '\n' +
+    'Mailing address: ' + mail + '\n' +
+    'County: ' + county + ' County, NC\n' +
+    'Size: ' + acres + ' acres\n' +
+    'Parcel PIN: ' + pin + '\n\n' +
+    '---\n\n' +
+    'Dear ' + owner + ',\n\n' +
+    'My name is [Your Name]. I am a real estate developer focused on residential development in the greater Charlotte area, and I have identified your property in ' + county + ' County as a tract I would love to discuss.\n\n' +
+    'I am a direct buyer — not a broker. I would welcome a brief, no-pressure conversation at your convenience to see if there is any interest on your end.\n\n' +
+    'Phone: [Your Phone]\n' +
+    'Email: [Your Email]\n\n' +
+    'Thank you for your time.\n\n' +
+    'Best regards,\n' +
+    '[Your Name]\n' +
+    '[Your Company Name]';
+  navigator.clipboard.writeText(txt).then(function() {
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = 'Copy outreach letter'; }, 2000);
+  });
+}
+
+function exportCSV() {
+  var d = getFilt();
+  if (!d.length) return;
+  var headers = ['County','PIN','Owner','Owner Type','Mailing Address','Site Address','Acres','Land Use','Structure','Assessed Value','Feasibility Score','Miles to Interstate'];
+  var cols    = ['countyName','pin','owner','ownerType','mailAddr','siteAddr','acres','usedesc','struct','assessed','score','hwyMi'];
+  var csv = headers.join(',') + '\n' + d.map(function(t) {
+    return cols.map(function(c) {
+      return '"' + (t[c] || '').toString().replace(/"/g, '""') + '"';
+    }).join(',');
+  }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'landscout_charlotte_metro.csv';
+  a.click();
+}
+
+function copyMail() {
+  var d = getFilt();
+  if (!d.length) return;
+  var txt = d.map(function(t) {
+    return t.owner + ' | ' + t.mailAddr + ' | ' + t.acres.toFixed(1) + ' ac | ' + t.countyName + ' County';
+  }).join('\n');
+  navigator.clipboard.writeText(txt).then(function() {
+    alert('Copied ' + d.length + ' mailing entries to clipboard.');
+  });
+}
+</script>
+</body>
+</html>
